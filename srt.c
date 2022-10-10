@@ -23,6 +23,8 @@ extern const int SRT_4_LUT_P5_FDIV[128][16];
 #include <x86intrin.h>
 #endif
 
+#include <stdio.h>
+
 double div1(double x, double y)
 {
     union {
@@ -101,7 +103,7 @@ double div1(double x, double y)
         /*
         printf("%02d %02x %x %+2d\n",
         i, _r & 0x7f, (d >> 48) & 0xf,
-        SRT_4_LUT_P5_FDIV[_r & 0x7f][(d >> 48) & 0xf]);
+        SRT_4_LUT_P5[_r & 0x7f][(d >> 48) & 0xf]);
         */
         
         r = c_ ^ r_ ^ qd;
@@ -111,48 +113,60 @@ double div1(double x, double y)
         r *= 4, c *= 4;
     }
 
-    { // normalize quot
-        shamt = __lzcnt64(quot) - 9;
-        quot <<= shamt, e_x -= shamt;
+    { // normalize quot + GRS
+        r += c;         // gather r
+        
+        if (quot & 0x40000000000000)
+        {
+            quot <<= 1;
+
+            // tie breaking: (RS) 00 -> 01 / 11
+            if (quot & 0x3); else if (r < 0) quot -= 2;
+            quot = quot | (!!r);
+        }
+        else
+        {
+            q = SRT_4_LUT_P5[(r >> 49) & 0x7f][(d >> 48) & 0xf];
+            r -= q * d;
+            quot = quot * 4 + q;
+
+            // tie breaking: (RS) 00 -> 01 / 11
+            if (q == 0) if (r < 0) quot -= 2;
+            quot = quot | (!!r), e_x -= 1;
+        }
     }
 
-    if (e_x >= 0x7ff)
-        z.i |= FLOAT64_E;
-    else if (e_x <= 0)
+    if (e_x <= 0)
     {
         if (e_x < -52)
             return z.f;
 
-        quot <<= 1;
-        quot |= !((r + c) & 0x80000000000000);
         quot = (quot >> -e_x) | !!(quot & (FLOAT64_M >> (52 + e_x)));
-        // LRS rounding
-        quot += (quot & 0x8) * !!(quot & 0x17);
+        // RTE rounding
+        quot += (quot & 0x4) * !!(quot & 0xb);
 
         if (quot & 0x100000000000000)
             e_x = 1;
         else
             e_x = 0;
 
-        quot >>= 4;
-        quot &= FLOAT64_M;
-
-        z.i |= ((long long)e_x << 52) | quot;
+        quot >>= 3;
     }
     else
     {
-        quot <<= 1;
-        quot |= !((r + c) & 0x80000000000000);
-        // LRS rounding
+        // RTE rounding
         quot += (quot & 0x4) * !!(quot & 0xb);
         
         if (quot & 0x100000000000000)
             quot = 0, e_x += 1;
         else
             quot >>= 3;
-
-        z.i |= ((long long)e_x << 52) | (quot & FLOAT64_M);
     }
+
+    if (e_x >= 0x7ff)
+        z.i |= FLOAT64_E;
+    else
+        z.i |= ((long long)e_x << 52) | (quot & FLOAT64_M);
 
     return z.f;
 }
@@ -247,48 +261,60 @@ double div2(double x, double y)
         r *= 4, c *= 4;
     }
 
-    { // normalize quot
-        shamt = __lzcnt64(quot) - 9;
-        quot <<= shamt, e_x -= shamt;
+    { // normalize quot + GRS
+        r += c;         // gather r
+        
+        if (quot & 0x40000000000000)
+        {
+            quot <<= 1;
+
+            // tie breaking: (RS) 00 -> 01 / 11
+            if (quot & 0x3); else if (r < 0) quot -= 2;
+            quot = quot | (!!r);
+        }
+        else
+        {
+            q = SRT_4_LUT_P5[(r >> 49) & 0x7f][(d >> 48) & 0xf];
+            r -= q * d;
+            quot = quot * 4 + q;
+
+            // tie breaking: (RS) 00 -> 01 / 11
+            if (q == 0) if (r < 0) quot -= 2;
+            quot = quot | (!!r), e_x -= 1;
+        }
     }
 
-    if (e_x >= 0x7ff)
-        z.i |= FLOAT64_E;
-    else if (e_x <= 0)
+    if (e_x <= 0)
     {
         if (e_x < -52)
             return z.f;
 
-        quot <<= 1;
-        quot |= !((r + c) & 0x80000000000000);
         quot = (quot >> -e_x) | !!(quot & (FLOAT64_M >> (52 + e_x)));
-        // LRS rounding
-        quot += (quot & 0x8) * !!(quot & 0x17);
+        // RTE rounding
+        quot += (quot & 0x4) * !!(quot & 0xb);
 
         if (quot & 0x100000000000000)
             e_x = 1;
         else
             e_x = 0;
 
-        quot >>= 4;
-        quot &= FLOAT64_M;
-
-        z.i |= ((long long)e_x << 52) | quot;
+        quot >>= 3;
     }
     else
     {
-        quot <<= 1;
-        quot |= !((r + c) & 0x80000000000000);
-        // LRS rounding
+        // RTE rounding
         quot += (quot & 0x4) * !!(quot & 0xb);
         
         if (quot & 0x100000000000000)
             quot = 0, e_x += 1;
         else
             quot >>= 3;
-
-        z.i |= ((long long)e_x << 52) | (quot & FLOAT64_M);
     }
+
+    if (e_x >= 0x7ff)
+        z.i |= FLOAT64_E;
+    else
+        z.i |= ((long long)e_x << 52) | (quot & FLOAT64_M);
 
     return z.f;
 }
