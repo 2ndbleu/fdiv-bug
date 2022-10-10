@@ -1,5 +1,5 @@
 # fdiv-bug
-P5 Pentium FDIV bug simulation code
+P5 Pentium FDIV bug simulation code (for double precision IEEE.754 binary floating point)
 
 ```
 > Simple FP64 Division
