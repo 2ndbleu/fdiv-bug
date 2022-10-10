@@ -1,5 +1,5 @@
 # fdiv-bug
-P5 Pentium FDIV bug
+P5 Pentium FDIV bug simulation code
 
 ```
 > Simple FP64 Division
