@@ -16,7 +16,7 @@ SRT-4 fdiv (with bug):  1.3337390689020376
             dividend :  1.000000
              divisor :  824633702441.000000
 Processor fdiv       :  1.2126596294086669e-012
-SRT-4 fdiv           :  1.2126596294086671e-012
+SRT-4 fdiv           :  1.2126596294086669e-012
 SRT-4 fdiv (with bug):  1.2126596248911579e-012
 ============== TEST END ==============
 When multiplying the reciprocal,
