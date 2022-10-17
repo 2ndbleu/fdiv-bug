@@ -23,7 +23,7 @@ extern const int SRT_4_LUT_P5_FDIV[128][16];
 #include <x86intrin.h>
 #endif
 
-#include <stdio.h>
+//  #include <stdio.h>
 
 double div1(double x, double y)
 {
@@ -143,14 +143,14 @@ double div1(double x, double y)
 
         quot = (quot >> -e_x) | !!(quot & (FLOAT64_M >> (52 + e_x)));
         // RTE rounding
-        quot += (quot & 0x4) * !!(quot & 0xb);
+        quot += (quot & 0x8) * !!(quot & 0x17);
 
         if (quot & 0x100000000000000)
             e_x = 1;
         else
             e_x = 0;
 
-        quot >>= 3;
+        quot >>= 4;
     }
     else
     {
@@ -291,14 +291,14 @@ double div2(double x, double y)
 
         quot = (quot >> -e_x) | !!(quot & (FLOAT64_M >> (52 + e_x)));
         // RTE rounding
-        quot += (quot & 0x4) * !!(quot & 0xb);
+        quot += (quot & 0x8) * !!(quot & 0x17);
 
         if (quot & 0x100000000000000)
             e_x = 1;
         else
             e_x = 0;
 
-        quot >>= 3;
+        quot >>= 4;
     }
     else
     {
